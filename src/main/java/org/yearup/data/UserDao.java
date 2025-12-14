@@ -4,7 +4,8 @@ import org.yearup.models.User;
 
 import java.util.List;
 
-public interface UserDao {
+public interface  UserDao {
+    User getByUsername(String username );
 
     List<User> getAll();
 
@@ -17,4 +18,6 @@ public interface UserDao {
     User create(User user);
 
     boolean exists(String username);
+
+
 }

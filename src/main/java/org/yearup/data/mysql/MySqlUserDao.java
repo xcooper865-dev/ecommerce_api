@@ -49,6 +49,11 @@ public class MySqlUserDao extends MySqlDaoBase implements UserDao
     }
 
     @Override
+    public User getByUsername(String username) {
+        return null;
+    }
+
+    @Override
     public List<User> getAll()
     {
         List<User> users = new ArrayList<>();
