@@ -10,16 +10,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import org.yearup.models.Profile;
 import org.yearup.data.ProfileDao;
 import org.yearup.data.UserDao;
+import org.yearup.models.Profile;
+import org.yearup.models.User;
 import org.yearup.models.authentication.LoginDto;
 import org.yearup.models.authentication.LoginResponseDto;
 import org.yearup.models.authentication.RegisterUserDto;
-import org.yearup.models.User;
 import org.yearup.security.jwt.JWTFilter;
 import org.yearup.security.jwt.TokenProvider;
 
@@ -30,69 +31,89 @@ public class AuthenticationController {
 
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private UserDao userDao;
-    private ProfileDao profileDao;
+    private final UserDao userDao;
+    private final ProfileDao profileDao;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthenticationController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, UserDao userDao, ProfileDao profileDao) {
+    public AuthenticationController(
+            TokenProvider tokenProvider,
+            AuthenticationManagerBuilder authenticationManagerBuilder,
+            UserDao userDao,
+            ProfileDao profileDao,
+            PasswordEncoder passwordEncoder
+    ) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDao = userDao;
         this.profileDao = profileDao;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    // --------------------------
+    // LOGIN
+    // --------------------------
+    @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginDto loginDto) {
 
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
+        try {
+            // Create authentication token
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
 
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.createToken(authentication, false);
+            // Authenticate
+            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        try
-        {
+            // Generate JWT
+            String jwt = tokenProvider.createToken(authentication, false);
+
+            // Get user from DB
             User user = userDao.getByUserName(loginDto.getUsername());
+            if (user == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            }
 
-            if (user == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
+            // Return JWT in header and body
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+
             return new ResponseEntity<>(new LoginResponseDto(jwt, user), httpHeaders, HttpStatus.OK);
-        }
-        catch(Exception ex)
-        {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
+
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
     }
 
+    // --------------------------
+    // REGISTER
+    // --------------------------
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<User> register(@Valid @RequestBody RegisterUserDto newUser) {
 
-        try
-        {
-            boolean exists = userDao.exists(newUser.getUsername());
-            if (exists)
-            {
+        try {
+            // Check if username already exists
+            if (userDao.exists(newUser.getUsername())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User Already Exists.");
             }
 
-            // create user
-            User user = userDao.create(new User(0, newUser.getUsername(), newUser.getPassword(), newUser.getRole()));
+            // Hash the password
+            String hashedPassword = passwordEncoder.encode(newUser.getPassword());
 
-            // create profile
+            // Create user in DB
+            User user = userDao.create(
+                    new User(0, newUser.getUsername(), hashedPassword, newUser.getRole())
+            );
+
+            // Create profile
             Profile profile = new Profile();
             profile.setUserId(user.getId());
             profileDao.create(profile);
 
             return new ResponseEntity<>(user, HttpStatus.CREATED);
-        }
-        catch (Exception e)
-        {
+
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
         }
     }
-
 }
-

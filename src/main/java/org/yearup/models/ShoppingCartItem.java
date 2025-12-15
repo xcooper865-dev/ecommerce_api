@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 public class ShoppingCartItem
 {
-    private Product product = null;
+    private Product product ;
     private int quantity = 1;
     private BigDecimal discountPercent = BigDecimal.ZERO;
 

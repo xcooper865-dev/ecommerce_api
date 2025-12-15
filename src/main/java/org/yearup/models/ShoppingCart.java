@@ -33,14 +33,24 @@ public class ShoppingCart
         return items.get(productId);
     }
 
-    public BigDecimal getTotal()
-    {
+    public BigDecimal getTotal() {
         BigDecimal total = items.values()
-                                .stream()
-                                .map(i -> i.getLineTotal())
-                                .reduce( BigDecimal.ZERO, (lineTotal, subTotal) -> subTotal.add(lineTotal));
-
-        return total;
+                .stream()
+                .map(ShoppingCartItem::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+return total;
     }
 
+    public void addItem(int productId, int quantity) {
+
+        ShoppingCartItem item = new ShoppingCartItem();
+
+        Product product = new Product();
+        product.setProductId(productId);
+
+        item.setProduct(product);
+        item.setQuantity(quantity);
+
+        items.put(productId,item);
+    }
 }
