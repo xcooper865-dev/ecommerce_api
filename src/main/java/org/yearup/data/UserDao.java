@@ -4,14 +4,13 @@ import org.yearup.models.User;
 
 import java.util.List;
 
-public interface  UserDao {
-    User getByUsername(String username );
+public interface UserDao {
+    // Get user by username (used for authentication)
+    User getByUsername(String username);
 
     List<User> getAll();
 
     User getUserById(int userId);
-
-    User getByUserName(String username);
 
     int getIdByUsername(String username);
 
@@ -19,5 +18,5 @@ public interface  UserDao {
 
     boolean exists(String username);
 
-
+    User getByUserName(String lowercaseLogin);
 }

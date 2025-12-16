@@ -1,6 +1,5 @@
 package org.yearup.security;
 
-
 import org.yearup.data.UserDao;
 import org.yearup.models.User;
 import org.slf4j.Logger;
@@ -14,14 +13,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Authenticate a user from the database.
- */
 @Component("userDetailsService")
 public class UserModelDetailsService implements UserDetailsService {
 
     private final Logger log = LoggerFactory.getLogger(UserModelDetailsService.class);
-
     private final UserDao userDao;
 
     public UserModelDetailsService(UserDao userDao) {
@@ -31,20 +26,26 @@ public class UserModelDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating user '{}'", login);
+
         String lowercaseLogin = login.toLowerCase();
-        return createSpringSecurityUser(lowercaseLogin, userDao.getByUserName(lowercaseLogin));
+
+        User user = userDao.getByUserName(lowercaseLogin);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        return createSpringSecurityUser(lowercaseLogin, user);
     }
 
-    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
-        if (!user.isActivated()) {
-            throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
-        }
+    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String login, User user) {
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
-                .map(authority -> new SimpleGrantedAuthority(authority.getName()))
+                .map(auth -> new SimpleGrantedAuthority(auth.getName()))
                 .collect(Collectors.toList());
-        return new org.springframework.security.core.userdetails.User(user.getUsername(),
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
                 user.getPassword(),
-                grantedAuthorities);
+                grantedAuthorities
+        );
     }
 }
-

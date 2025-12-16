@@ -54,10 +54,6 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
             params.add(subCategory);
         }
 
-//        categoryId = categoryId == null ? -1 : categoryId;
-//        minPrice = minPrice == null ? new BigDecimal("-1") : minPrice;
-//        maxPrice = maxPrice == null ? new BigDecimal("-1") : maxPrice;
-//        subCategory = subCategory == null ? "" : subCategory;
 
         try (Connection connection = getConnection())
         {
@@ -68,13 +64,6 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
                 statement.setObject(i + 1, params.get(i));
             }
 
-//            PreparedStatement statement = connection.prepareStatement(sql);
-//            statement.setInt(1, categoryId);
-//            statement.setInt(2, categoryId);
-//            statement.setBigDecimal(3, minPrice);
-//            statement.setBigDecimal(4, minPrice);
-//            statement.setString(5, subCategory);
-//            statement.setString(6, subCategory);
 
             ResultSet row = statement.executeQuery();
 

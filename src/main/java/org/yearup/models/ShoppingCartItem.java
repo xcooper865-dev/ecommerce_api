@@ -6,11 +6,16 @@ import java.math.BigDecimal;
 
 public class ShoppingCartItem
 {
-    private Product product ;
+    private Product product = null;
     private int quantity = 1;
     private BigDecimal discountPercent = BigDecimal.ZERO;
+    private BigDecimal lineTotal = null; //store lineTotal when set Fix
 
 
+    public ShoppingCartItem()
+    {
+        // do nothing
+    }
     public Product getProduct()
     {
         return product;
@@ -47,14 +52,19 @@ public class ShoppingCartItem
         return this.product.getProductId();
     }
 
-    public BigDecimal getLineTotal()
-    {
-        BigDecimal basePrice = product.getPrice();
-        BigDecimal quantity = new BigDecimal(this.quantity);
-
-        BigDecimal subTotal = basePrice.multiply(quantity);
+    public BigDecimal getLineTotal(){
+        // FIX: if lineTotal was explicitly set (from DAO), return it
+        if (lineTotal != null)
+            return lineTotal;
+        BigDecimal basePrice = product.getPrice();  // otherwise compute it
+        BigDecimal qty = new BigDecimal(this.quantity);
+        BigDecimal subTotal = basePrice.multiply(qty);
         BigDecimal discountAmount = subTotal.multiply(discountPercent);
-
         return subTotal.subtract(discountAmount);
-    }
+
+
+    }  public void setLineTotal(BigDecimal lineTotal)
+{this.lineTotal = lineTotal;
 }
+}
+

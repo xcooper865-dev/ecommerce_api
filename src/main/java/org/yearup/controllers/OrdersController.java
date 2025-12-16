@@ -17,27 +17,36 @@ import java.security.Principal;
 @PreAuthorize("isAuthenticated()")
 public class OrdersController {
 
-    private OrderDao orderDao;
-    private ShoppingCartDao shoppingCartDao;
-    private UserDao userDao;
+    private final OrderDao orderDao;
+    private final ShoppingCartDao shoppingCartDao;
+    private final UserDao userDao;
 
     @Autowired
     public OrdersController(
             OrderDao orderDao,
             ShoppingCartDao shoppingCartDao,
             UserDao userDao
-    )
-    {
+    ) {
         this.orderDao = orderDao;
         this.shoppingCartDao = shoppingCartDao;
         this.userDao = userDao;
     }
-    @PostMapping
-            public Order checkout(Principal principal){
 
-        User user = userDao.getByUserName(principal.getName());
+    @PostMapping
+    public Order checkout(Principal principal) {
+
+        // Use the correct method
+        User user = userDao.getByUsername(principal.getName());
+
+        if (user == null) {
+            throw new RuntimeException("User not found: " + principal.getName());
+        }
 
         ShoppingCart cart = shoppingCartDao.getByUserId(user.getId());
+
+        if (cart == null || cart.getItems().isEmpty()) {
+            throw new RuntimeException("Shopping cart is empty for user: " + user.getUsername());
+        }
 
         Order order = new Order();
         order.setUserId(user.getId());
@@ -45,14 +54,12 @@ public class OrdersController {
 
         order = orderDao.createOrder(order);
 
-        for(ShoppingCartItem item : cart.getItems().values())
-        {
+        for (ShoppingCartItem item : cart.getItems().values()) {
             OrderLineItem line = new OrderLineItem();
             line.setOrderId(order.getOrderId());
             line.setProductId(item.getProductId());
             line.setQuantity(item.getQuantity());
             line.setPrice(item.getProduct().getPrice());
-
 
             orderDao.addLineItem(line);
         }
@@ -60,7 +67,5 @@ public class OrdersController {
         shoppingCartDao.clearCart(user.getId());
 
         return order;
-
     }
-
 }

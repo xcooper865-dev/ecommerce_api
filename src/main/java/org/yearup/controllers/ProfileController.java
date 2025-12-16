@@ -8,39 +8,37 @@ import org.yearup.data.UserDao;
 import org.yearup.models.Profile;
 import org.yearup.models.User;
 
-import javax.websocket.server.ServerEndpoint;
 import java.security.Principal;
 
 @RestController
 @RequestMapping("/profile")
-@PreAuthorize("isAuthenticated")
+@PreAuthorize("isAuthenticated()")  // Fixed: add parentheses
 public class ProfileController {
 
-    private ProfileDao profileDao;
-    private UserDao userDao;
+    private final ProfileDao profileDao;
+    private final UserDao userDao;
 
     @Autowired
-    public ProfileController(ProfileDao profileDao, UserDao userDao)
-    {
+    public ProfileController(ProfileDao profileDao, UserDao userDao) {
         this.profileDao = profileDao;
         this.userDao = userDao;
     }
 
     @GetMapping
     public Profile getProfile(Principal principal) {
-
-        {
-            User user = userDao.getByUserName(principal.getName());
-            return profileDao.getByUserId(user.getId());
+        User user = userDao.getByUsername(principal.getName());  // Fixed method name
+        if (user == null) {
+            throw new RuntimeException("User not found: " + principal.getName());
         }
+        return profileDao.getByUserId(user.getId());
     }
 
-        @PutMapping
-        public void updateProfile(
-                @RequestBody Profile profile,
-                Principal principal)
-        {
-            User user = userDao.getByUserName(principal.getName());
-            profileDao.update(user.getId(), profile);
+    @PutMapping
+    public void updateProfile(@RequestBody Profile profile, Principal principal) {
+        User user = userDao.getByUsername(principal.getName());  // Fixed method name
+        if (user == null) {
+            throw new RuntimeException("User not found: " + principal.getName());
         }
+        profileDao.update(user.getId(), profile);
     }
+}

@@ -10,10 +10,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
 import org.yearup.data.ProfileDao;
 import org.yearup.data.UserDao;
 import org.yearup.models.Profile;
@@ -33,87 +31,61 @@ public class AuthenticationController {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final UserDao userDao;
     private final ProfileDao profileDao;
-    private final PasswordEncoder passwordEncoder;
 
-    public AuthenticationController(
-            TokenProvider tokenProvider,
-            AuthenticationManagerBuilder authenticationManagerBuilder,
-            UserDao userDao,
-            ProfileDao profileDao,
-            PasswordEncoder passwordEncoder
-    ) {
+    public AuthenticationController(TokenProvider tokenProvider,
+                                    AuthenticationManagerBuilder authenticationManagerBuilder,
+                                    UserDao userDao,
+                                    ProfileDao profileDao) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDao = userDao;
         this.profileDao = profileDao;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    // --------------------------
-    // LOGIN
-    // --------------------------
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginDto loginDto) {
 
-        try {
-            // Create authentication token
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
+        String username = loginDto.getUsername().toLowerCase().trim();
 
-            // Authenticate
-            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            // Generate JWT
-            String jwt = tokenProvider.createToken(authentication, false);
-
-            // Get user from DB
-            User user = userDao.getByUserName(loginDto.getUsername());
-            if (user == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-            }
-
-            // Return JWT in header and body
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
-
-            return new ResponseEntity<>(new LoginResponseDto(jwt, user), httpHeaders, HttpStatus.OK);
-
-        } catch (Exception ex) {
+        User user = userDao.getByUserName(username);
+        if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
+
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(username, loginDto.getPassword());
+
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String jwt = tokenProvider.createToken(authentication, false);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+
+        return new ResponseEntity<>(new LoginResponseDto(jwt, user), httpHeaders, HttpStatus.OK);
     }
 
-    // --------------------------
-    // REGISTER
-    // --------------------------
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<User> register(@Valid @RequestBody RegisterUserDto newUser) {
 
-        try {
-            // Check if username already exists
-            if (userDao.exists(newUser.getUsername())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User Already Exists.");
-            }
+        String username = newUser.getUsername().toLowerCase().trim();
 
-            // Hash the password
-            String hashedPassword = passwordEncoder.encode(newUser.getPassword());
-
-            // Create user in DB
-            User user = userDao.create(
-                    new User(0, newUser.getUsername(), hashedPassword, newUser.getRole())
-            );
-
-            // Create profile
-            Profile profile = new Profile();
-            profile.setUserId(user.getId());
-            profileDao.create(profile);
-
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
+        if (!newUser.getPassword().equals(newUser.getConfirmPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match.");
         }
+
+        if (userDao.exists(username)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User Already Exists.");
+        }
+
+        User user = userDao.create(new User(0, username, newUser.getPassword(), newUser.getRole()));
+
+        Profile profile = new Profile();
+        profile.setUserId(user.getId());
+        profileDao.create(profile);
+
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 }
