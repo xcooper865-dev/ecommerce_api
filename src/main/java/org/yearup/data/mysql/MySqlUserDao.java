@@ -50,7 +50,7 @@ public class MySqlUserDao extends MySqlDaoBase implements UserDao {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return null;
+        return getByUsername(username);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class MySqlUserDao extends MySqlDaoBase implements UserDao {
 
     @Override
     public User getByUsername(String username) {
-        return null;
+        return getByUserName(username);
     }
 
     @Override

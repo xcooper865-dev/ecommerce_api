@@ -2,6 +2,7 @@ package org.yearup.data.mysql;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.yearup.data.ShoppingCartDao;
+import org.yearup.models.PriceRange;
 import org.yearup.models.Product;
 import org.yearup.models.ShoppingCart;
 import org.yearup.models.ShoppingCartItem;
@@ -22,6 +23,16 @@ public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDa
     public MySqlShoppingCartDao(DataSource dataSource) {
         super(dataSource);
     }
+
+//    @Override
+//    public PriceRange getPriceRange() {
+//        return null;
+//    }
+
+//    @Override
+//    public PriceRange getPriceRange() {
+//        return priceRange;
+//    }
 
     @Override
     public ShoppingCart getByUserId(int userId) {

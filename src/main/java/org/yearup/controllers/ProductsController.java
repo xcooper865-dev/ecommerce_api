@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.yearup.data.ProductStatsDao;
+import org.yearup.models.PriceRange;
 import org.yearup.models.Product;
 import org.yearup.data.ProductDao;
 
@@ -88,6 +90,16 @@ public class ProductsController
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Oops... our bad.");
         }
     }
+
+    @Autowired
+    private ProductStatsDao productStatsDao;
+
+    @GetMapping("/price-range")
+    @PreAuthorize("permitAll()")
+    public PriceRange getPriceRange() {
+        return productStatsDao.getPriceRange();
+    }
+
 
     @DeleteMapping("{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")

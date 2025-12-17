@@ -1,8 +1,10 @@
 package org.yearup.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.yearup.data.ProfileDao;
 import org.yearup.data.UserDao;
 import org.yearup.models.Profile;
@@ -23,14 +25,22 @@ public class ProfileController {
         this.profileDao = profileDao;
         this.userDao = userDao;
     }
-
     @GetMapping
     public Profile getProfile(Principal principal) {
-        User user = userDao.getByUsername(principal.getName());  // Fixed method name
+        User user = userDao.getByUsername(principal.getName());
         if (user == null) {
-            throw new RuntimeException("User not found: " + principal.getName());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        return profileDao.getByUserId(user.getId());
+
+        Profile profile = profileDao.getByUserId(user.getId());
+
+        if (profile == null) {
+            profile = new Profile();
+            profile.setUserId(user.getId());
+            profileDao.create(profile);
+        }
+
+        return profile;
     }
 
     @PutMapping
