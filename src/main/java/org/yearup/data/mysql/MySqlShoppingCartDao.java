@@ -24,15 +24,6 @@ public class MySqlShoppingCartDao extends MySqlDaoBase implements ShoppingCartDa
         super(dataSource);
     }
 
-//    @Override
-//    public PriceRange getPriceRange() {
-//        return null;
-//    }
-
-//    @Override
-//    public PriceRange getPriceRange() {
-//        return priceRange;
-//    }
 
     @Override
     public ShoppingCart getByUserId(int userId) {

@@ -20,8 +20,6 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
     }
 
 
-
-
     @Override
     public List<Product> search(Integer categoryId, BigDecimal minPrice, BigDecimal maxPrice, String subCategory)
     {
@@ -29,9 +27,10 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
 
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE 1=1 ");
     // +
-                //"WHERE (category_id = ? OR ? = -1) " +
-              //  "   AND (price <= ? OR ? = -1) " +
-               // "   AND (subcategory = ? OR ? = '') ";
+        //"WHERE (category_id = ? OR ? = -1) " +
+              //  "   AND (price >= ? OR ? = -1) " + (minPrice)
+       // "   AND (price <= ? OR ? = -1) " (maxPrice)
+        // "   AND (subcategory = ? OR ? = '') ";
         List<Object> params = new ArrayList<>();
 
         if (categoryId != null)
@@ -58,7 +57,6 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
             params.add(subCategory);
         }
 
-
         try (Connection connection = getConnection())
         {
             PreparedStatement statement =
@@ -67,7 +65,6 @@ public class MySqlProductDao extends MySqlDaoBase implements ProductDao
             {
                 statement.setObject(i + 1, params.get(i));
             }
-
 
             ResultSet row = statement.executeQuery();
 

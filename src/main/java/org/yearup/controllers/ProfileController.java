@@ -14,7 +14,8 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("/profile")
-@PreAuthorize("isAuthenticated()")  // Fixed: add parentheses
+@PreAuthorize("isAuthenticated()") // Fixed: add parentheses
+@CrossOrigin
 public class ProfileController {
 
     private final ProfileDao profileDao;
@@ -27,6 +28,8 @@ public class ProfileController {
     }
     @GetMapping
     public Profile getProfile(Principal principal) {
+
+
         User user = userDao.getByUsername(principal.getName());
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
