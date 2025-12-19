@@ -50,7 +50,7 @@ public class MySqlUserDao extends MySqlDaoBase implements UserDao {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return getByUsername(username);
+        return null;
     }
 
     @Override

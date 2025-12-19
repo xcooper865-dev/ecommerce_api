@@ -16,7 +16,9 @@ public interface UserDao {
 
     User create(User user);
 
+    User getByUserName(String username);
+
     boolean exists(String username);
 
-    User getByUserName(String lowercaseLogin);
+
 }
