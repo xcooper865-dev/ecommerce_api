@@ -35,6 +35,14 @@ customers are able to view the shopping cart
 
 ![New Note](https://github.com/user-attachments/assets/40851864-3b2e-4c65-a5bb-b380ee989347)
 
+i had a hard time trying to get the profile to load the issue was i missed a curly brace on my save method in my front end 
+and i missed the bean for cross origin so that my applications would talk to eachother 
+![New Note](https://github.com/user-attachments/assets/e4a1b7eb-8b48-4436-b928-2f6f2251a8b9)
+
+![New Note](https://github.com/user-attachments/assets/3bcb56e0-e979-411c-a305-3b29dd188539)
+
+
+
 
 
 
